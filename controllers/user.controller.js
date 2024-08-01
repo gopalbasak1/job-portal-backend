@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken"
 export const register = async(req, res)=>{
     try{
         const {fullName, email, phoneNumber, password, role} = req.body;
-        console.log(fullName, email, phoneNumber, password, role);
+
         if(!fullName || !email || !phoneNumber || !password || !role){
             return res.status(400).json({
                 message: "Something is missing",
@@ -108,13 +108,6 @@ export const updateProfile = async (req, res) => {
     try{
         const {fullName, email, phoneNumber, bio, skills} = req.body;
         const file = req.file;
-
-        // if(!fullName || !email || !phoneNumber || !bio || !skills){
-        //     return res.status(400).json({
-        //         message: "Something is missing",
-        //         success: false
-        //     })
-        // };
 
         //cloudinary asba..
         let skillsArray
