@@ -1,6 +1,8 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import getDataUri from "../utils/datauri.js";
+import cloudinary from "../utils/cloudinary.js";
 
 
 export const register = async(req, res)=>{
@@ -105,38 +107,47 @@ export const logout = async (req, res) => {
     }
 }
 export const updateProfile = async (req, res) => {
-    try{
-        const {fullName, email, phoneNumber, bio, skills} = req.body;
+    try {
+        const { fullName, email, phoneNumber, bio, skills } = req.body;
+        
         const file = req.file;
+        // cloudinary here
+        const fileUri = getDataUri(file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
 
-        //cloudinary asba..
-        let skillsArray
 
+
+        let skillsArray;
         if(skills){
             skillsArray = skills.split(",");
         }
-        const userId = req.id //middleware authentication
+        const userId = req.id; // middleware authentication
         let user = await User.findById(userId);
-        if(!user){
+
+        if (!user) {
             return res.status(400).json({
-                message: "user not found",
+                message: "User not found.",
                 success: false
             })
-        };
-        
-        //updating data
-       if(fullName) user.fullName = fullName
-       if(email) user.email = email
-       if(phoneNumber) user.phoneNumber = phoneNumber
-       if(bio) user.profile.bio = bio
-       if(skills) user.profile.skills = skillsArray  
+        }
+        // updating data
+        if(fullName) user.fullName = fullName
+        if(email) user.email = email
+        if(phoneNumber)  user.phoneNumber = phoneNumber
+        if(bio) user.profile.bio = bio
+        if(skills) user.profile.skills = skillsArray
+      
+        // resume comes later here...
+        if(cloudResponse){
+            user.profile.resume = cloudResponse.secure_url // save the cloudinary url
+            user.profile.resumeOriginalName = file.originalname // Save the original file name
+        }
 
-        //resume comes later here...
 
-        await user.save()
-        
+        await user.save();
+
         user = {
-            _id:user._id,
+            _id: user._id,
             fullName: user.fullName,
             email: user.email,
             phoneNumber: user.phoneNumber,
@@ -145,11 +156,11 @@ export const updateProfile = async (req, res) => {
         }
 
         return res.status(200).json({
-            message: "Profile updated successfully",
-            success: true
+            message:"Profile updated successfully.",
+            user,
+            success:true
         })
-
-    } catch(error){
+    } catch (error) {
         console.log(error);
     }
 }
